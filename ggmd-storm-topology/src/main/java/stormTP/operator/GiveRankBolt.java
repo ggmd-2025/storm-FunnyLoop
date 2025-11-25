@@ -18,6 +18,7 @@ import javax.json.JsonReader;
 import javax.json.JsonArray;
 import javax.json.JsonValue;
 import java.io.StringReader;
+import java.util.ArrayList; 
 
 
 import java.util.List;
@@ -28,7 +29,7 @@ import java.util.List;
  * @author lumineau
  *
  */
-public class MyTortoiseBolt implements IRichBolt {
+public class GiveRankBolt implements IRichBolt {
 
 	private static final long serialVersionUID = 4262369370788107343L;
 
@@ -36,7 +37,7 @@ public class MyTortoiseBolt implements IRichBolt {
 	private OutputCollector collector;
 	
 	
-	public MyTortoiseBolt () {
+	public GiveRankBolt () {
 		
 	}
 	
@@ -54,30 +55,68 @@ public class MyTortoiseBolt implements IRichBolt {
 
 			JsonArray l = obj.getJsonArray("runners");
 
+			List<JsonObject> tortueList = new ArrayList();
+			List<Integer> places = new ArrayList();
+
 			for (JsonValue v : l){
 					JsonObject turtle = v.asJsonObject();
-					if (turtle.getInt("id")==3){
+					tortueList.add(turtle);
+					places.add((turtle.getInt("tour")*turtle.getInt("maxcel"))+turtle.getInt("cellule"));
+			}	
 
-						collector.emit(t, new Values(
+			logger.info("Debut assignation Rang ==>");
+			for (int i=0; i < tortueList.size(); i++){
+				int current_score = places.get(i);
+				int nb_before = 0;
+				int nb_ex = 0;
+				for (int j : places){
+					if (j>current_score){
+						nb_before++;
+					}
+					if (j==current_score){
+						nb_ex++;
+					}
+				}
+				JsonObject turtle = tortueList.get(i);
+
+				if (nb_ex > 1 ){
+					collector.emit(t, new Values(
 							turtle.getInt("id"),
 							turtle.getInt("top"),
-							"Michelangelo",
-							(turtle.getInt("tour")*turtle.getInt("maxcel"))+turtle.getInt("cellule"),
+							String.valueOf(nb_before+1)+"-ex",
 							turtle.getInt("total"),
 							turtle.getInt("maxcel")
 						));
-						logger.info( "=> " + "Turtle 3 found" + " treated! valules: id="
+
+						logger.info( "=> treated! valules: id="
 						+String.valueOf(turtle.getInt("id"))+", top="+
-							String.valueOf(turtle.getInt("top"))+", nom="+
-							"Michelangelo, nbCell="+
-							String.valueOf(((turtle.getInt("tour")*turtle.getInt("maxcel"))+turtle.getInt("cellule")))+", total="+
+							String.valueOf(turtle.getInt("top"))+", rang="+
+							String.valueOf(nb_before+1)+"-ex"+", total="+
 							String.valueOf(turtle.getInt("total"))+", maxcel="+
 							String.valueOf(turtle.getInt("maxcel"))
 						);
+				}else{
+					collector.emit(t, new Values(
+							turtle.getInt("id"),
+							turtle.getInt("top"),
+							String.valueOf(nb_before+1),
+							turtle.getInt("total"),
+							turtle.getInt("maxcel")
+						));
+
+					logger.info( "=> treated! valules: id="
+						+String.valueOf(turtle.getInt("id"))+", top="+
+							String.valueOf(turtle.getInt("top"))+", rang="+
+							String.valueOf(nb_before+1)+", total="+
+							String.valueOf(turtle.getInt("total"))+", maxcel="+
+							String.valueOf(turtle.getInt("maxcel"))
+						);	
 				}
+				
 			}
-			
-						collector.ack(t);
+
+			logger.info("<== FIn assignation Rang");
+			collector.ack(t);
 
 		}catch (Exception e){
 			System.err.println("Empty tuple.");
@@ -93,7 +132,7 @@ public class MyTortoiseBolt implements IRichBolt {
 	 * @see backtype.storm.topology.IComponent#declareOutputFields(backtype.storm.topology.OutputFieldsDeclarer)
 	 */
 	public void declareOutputFields(OutputFieldsDeclarer arg0) {
-		arg0.declare(new Fields("id","top","nom","nbCellsParcourus","total","maxcel"));
+		arg0.declare(new Fields("id","top","rang","total","maxcel"));
 	}
 		
 
