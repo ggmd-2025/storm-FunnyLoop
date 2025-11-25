@@ -66,10 +66,16 @@ public class MyTortoiseBolt implements IRichBolt {
 							turtle.getInt("total"),
 							turtle.getInt("maxcel")
 						));
-						logger.info( "=> " + "Turtle 3 found" + " treated!");
+						logger.info( "=> " + "Turtle 3 found" + " treated! valules: id="
+						+String.valueOf(turtle.getInt("id"))+", top="+
+							String.valueOf(turtle.getInt("top"))+", nom="+
+							"Michelangelo, nbCell="+
+							String.valueOf(((turtle.getInt("tour")*turtle.getInt("maxcel"))+turtle.getInt("cellule")))+", total="+
+							String.valueOf(turtle.getInt("total"))+", maxcel="+
+							String.valueOf(turtle.getInt("maxcel"))
+						);
 						collector.ack(t);
 				}
-				logger.info( "=> " + "Not turtle 3 found" + " treated!");
 			}
 
 		}catch (Exception e){
